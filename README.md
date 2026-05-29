@@ -1,21 +1,26 @@
-# 智能知识库问答系统
+# Intelligent Knowledge Base QA System
 
-这是一个基于 Streamlit、LangChain、LangGraph、Chroma、BM25 和 DeepSeek API 的本地知识库问答 MVP。你可以上传 PDF、Word、Markdown、txt 等学习资料或项目文档，系统会解析、切片、向量化并持久化到 Chroma，然后通过网页界面进行基于资料来源的问答。
+An enterprise-style Retrieval-Augmented Generation (RAG) application for building and querying local knowledge bases from documents. The system supports document upload, text cleaning, knowledge base construction, multi-knowledge-base management, account login, role-based access control, and source-grounded question answering.
 
-## 功能列表
+## Features
 
-- Streamlit 网页界面，支持多文件上传和在线提问
-- 支持 PDF、docx、md、txt 文档解析
-- 使用 `RecursiveCharacterTextSplitter` 进行中文友好的文本切片
-- 使用 `BAAI/bge-small-zh-v1.5` 生成 HuggingFace Embedding
-- 使用 Chroma 持久化向量库，目录为 `data/chroma_db`
-- 使用 Chroma 向量检索和 BM25 关键词检索做混合检索
-- 使用 LangGraph 实现检索评估、查询改写、再检索和最终回答
-- 使用 DeepSeek OpenAI 兼容接口生成评估结果和答案
-- 答案展示来源文件名、页码和片段 ID
-- 每次问答写入 `logs/query_logs.jsonl`
+- Streamlit web interface
+- Account login and self-registration
+- Role-based access control: `admin` and `user`
+- User knowledge base authorization
+- Multi-knowledge-base management
+- File upload and text cleaning
+- Supported file types: PDF, DOCX, Markdown, TXT
+- Document parsing, chunking, embedding, and indexing
+- Chroma vector database persistence
+- HuggingFace Embedding model: `BAAI/bge-small-zh-v1.5`
+- Hybrid retrieval with Chroma vector search and BM25
+- LangGraph-based retrieval evaluation and query rewriting
+- DeepSeek API through an OpenAI-compatible interface
+- Source citations in final answers
+- JSONL query logs and SQLite audit logs
 
-## 技术栈
+## Tech Stack
 
 - Python
 - Streamlit
@@ -23,71 +28,144 @@
 - LangGraph
 - Chroma
 - BM25
-- HuggingFace Embedding: `BAAI/bge-small-zh-v1.5`
-- DeepSeek API: OpenAI 兼容接口
-- JSONL 日志
+- HuggingFace Embeddings
+- DeepSeek API
+- SQLite
+- JSONL logging
 
-## 安装步骤
+## Project Structure
+
+```text
+rag_agent_kb/
+├── app.py
+├── config.py
+├── requirements.txt
+├── .env.example
+├── README.md
+├── README_CN.md
+├── data/
+│   ├── app.db
+│   ├── uploads/
+│   ├── processed/
+│   ├── chroma_db/
+│   └── knowledge_bases/
+├── logs/
+│   └── query_logs.jsonl
+└── src/
+    ├── auth.py
+    ├── db.py
+    ├── document_loader.py
+    ├── splitter.py
+    ├── vector_store.py
+    ├── retriever.py
+    ├── llm.py
+    ├── agent_graph.py
+    ├── kb_manager.py
+    ├── logger.py
+    └── utils.py
+```
+
+Local runtime data such as `.env`, SQLite database files, uploaded documents, processed files, vector databases, and logs are excluded from Git by `.gitignore`.
+
+## Installation
 
 ```bash
 cd rag_agent_kb
 pip install -r requirements.txt
 ```
 
-首次运行会下载 Embedding 模型，耗时取决于网络和机器性能。
+The embedding model may be downloaded on first use.
 
-## 配置 DeepSeek API Key
+## Environment Variables
 
-复制环境变量示例文件：
+Copy the example file:
 
 ```bash
 copy .env.example .env
 ```
 
-然后编辑 `.env`：
+Then edit `.env`:
 
 ```env
-DEEPSEEK_API_KEY=你的 DeepSeek API Key
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
 DEEPSEEK_BASE_URL=https://api.deepseek.com
 DEEPSEEK_MODEL=deepseek-chat
 ```
 
-## 如何运行
+## Run
 
 ```bash
 streamlit run app.py
 ```
 
-打开终端显示的本地地址，例如 `http://localhost:8501`。
+Open the local URL shown in the terminal, usually:
 
-## 如何上传文档
+```text
+http://localhost:8501
+```
 
-1. 在左侧栏点击上传文件。
-2. 选择一个或多个 PDF、docx、md、txt 文件。
-3. 点击“构建知识库”。
-4. 系统会保存文件到 `data/uploads`，解析后写入 `data/chroma_db`。
+## Default Admin Account
 
-## 如何提问
+On first startup, the system creates a default administrator account if no users exist:
 
-1. 在页面中间的问题输入框输入问题。
-2. 点击“生成答案”。
-3. 系统会先进行混合检索，再由 LangGraph Agent 判断资料是否足够。
-4. 如果资料不足，Agent 会改写查询词并最多重试 2 次。
-5. 最终答案会展示引用来源。
+```text
+username: admin
+password: admin123
+```
 
-## 项目亮点
+Change the default password as soon as possible after the first login.
 
-- 结构清晰：页面、加载、切片、检索、LLM、Agent、日志各自独立
-- 支持混合检索：结合语义向量检索和 BM25 关键词检索
-- Agent 化流程：通过 LangGraph 实现评估、改写、再检索
-- 可追溯：答案和日志都保留来源文件、页码、片段 ID
-- 可扩展：后续可以加入用户权限、增量索引、重排序、对话记忆和在线文档同步
+## Roles And Permissions
 
-## 面试介绍话术
+### Admin
 
-这个项目是一个面向个人学习资料和项目文档的智能知识库问答系统。我使用 Streamlit 构建前端交互，用 LangChain 完成文档加载、切片、Embedding 和检索，用 Chroma 持久化向量库，并结合 BM25 做混合检索，提升中文资料中关键词和语义召回的稳定性。
+Admins can:
 
-在生成答案前，我用 LangGraph 设计了一个简单 Agent 流程：先检索，再让 LLM 判断资料是否足够，如果不足则改写查询词并重新检索，最多重试 2 次。最终回答严格要求基于知识库片段，并输出文件名、页码和 chunk_id，避免模型脱离资料编造内容。
+- Create knowledge bases
+- Upload and clean files
+- Build knowledge bases
+- Delete knowledge bases
+- View all knowledge bases
+- Manage users
+- Authorize users to access knowledge bases
+- View audit logs and query logs
+- Ask questions across all knowledge bases
 
-此外，系统会把每次查询写入 JSONL 日志，包括原始问题、改写问题、召回片段、答案、耗时和评估原因，方便后续做效果分析、召回优化和面试展示。
+### User
+
+Users can:
+
+- Register a normal account
+- View authorized knowledge bases
+- Ask questions against authorized knowledge bases
+- View their own query logs
+
+Users cannot create knowledge bases, delete knowledge bases, manage users, or access unauthorized knowledge bases.
+
+## Basic Workflow
+
+1. Log in as admin.
+2. Create a knowledge base.
+3. Upload documents.
+4. Clean files and preview the before/after content.
+5. Confirm whether to use cleaned files.
+6. Build the knowledge base.
+7. Authorize normal users if needed.
+8. Ask questions and review source citations.
+
+## Query Flow
+
+The system retrieves relevant chunks from the selected knowledge bases, evaluates whether the retrieved content is sufficient, rewrites the query if needed, retries retrieval up to two times, and then generates a final answer strictly based on the retrieved knowledge base content.
+
+Final answers include source references such as knowledge base name, file name, page number, and chunk ID.
+
+## Notes For Deployment
+
+This is a Streamlit application and is not suitable for GitHub Pages. Recommended deployment options include:
+
+- Streamlit Community Cloud
+- Hugging Face Spaces
+- A cloud server or internal company server
+
+Configure the DeepSeek API key as a secret or environment variable on the deployment platform.
 
