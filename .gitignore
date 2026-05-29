@@ -1,0 +1,39 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+
+# Local database
+data/app.db
+
+# Uploaded and processed files
+data/uploads/
+data/processed/
+
+# Knowledge base data
+data/knowledge_bases/
+data/chroma_db/
+
+# Logs
+logs/
+*.log
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

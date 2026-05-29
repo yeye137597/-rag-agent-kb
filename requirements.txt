@@ -1,0 +1,16 @@
+streamlit
+python-dotenv
+langchain
+langchain-community
+langchain-openai
+langchain-chroma
+langchain-huggingface
+langchain-text-splitters
+langgraph
+chromadb
+sentence-transformers
+pypdf
+docx2txt
+rank_bm25
+protobuf
+passlib[bcrypt]
