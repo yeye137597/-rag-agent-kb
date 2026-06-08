@@ -116,4 +116,13 @@ export const api = {
   queryLogs() {
     return request('/api/logs/queries')
   },
+  modelConfig() {
+    return request('/api/models/config')
+  },
+  updateModelConfig(payload) {
+    return request('/api/models/config', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
 }

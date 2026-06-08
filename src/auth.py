@@ -19,7 +19,10 @@ USERNAME_PATTERN = re.compile(r"^[\u4e00-\u9fa5A-Za-z0-9_-]+$")
 
 def hash_password(password: str) -> str:
     if pwd_context:
-        return pwd_context.hash(password)
+        try:
+            return pwd_context.hash(password)
+        except Exception:
+            pass
     salt = os.urandom(16).hex()
     digest = hashlib.pbkdf2_hmac("sha256", password.encode("utf-8"), salt.encode("utf-8"), 120000).hex()
     return f"pbkdf2_sha256${salt}${digest}"

@@ -6,6 +6,7 @@ from config import TOP_K
 from src.agent_graph import ask_question
 from src.auth import get_authorized_kb_ids, write_audit_log
 from src.kb_manager import get_kb_paths, list_knowledge_bases
+from src.model_factory import get_current_embedding_config, is_same_embedding_config
 from src.retriever import build_multi_kb_retriever
 
 
@@ -25,9 +26,35 @@ def _select_authorized_kbs(kb_ids: list[str], user: dict) -> list[dict]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"No access to knowledge bases: {denied_ids}")
 
     return [
-        {"id": kb_id, "name": all_kbs[kb_id]["name"], "paths": get_kb_paths(kb_id)}
+        {
+            "id": kb_id,
+            "name": all_kbs[kb_id]["name"],
+            "paths": get_kb_paths(kb_id),
+            "metadata": all_kbs[kb_id].get("metadata") or {},
+        }
         for kb_id in kb_ids
     ]
+
+
+def _validate_embedding_config(selected_kbs: list[dict]) -> None:
+    current_embedding = get_current_embedding_config()
+    for kb in selected_kbs:
+        kb_embedding = (kb.get("metadata") or {}).get("embedding")
+        if is_same_embedding_config(kb_embedding, current_embedding):
+            continue
+        if kb_embedding:
+            kb_text = f"{kb_embedding.get('provider', 'unknown')} / {kb_embedding.get('model', 'unknown')}"
+        else:
+            kb_text = "未记录 embedding 配置"
+        current_text = f"{current_embedding.get('provider')} / {current_embedding.get('model')}"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"当前系统 Embedding 模型与知识库「{kb['name']}」构建时使用的 Embedding 模型不一致。"
+                f"该知识库使用的是：{kb_text}；当前系统使用的是：{current_text}。"
+                "请切换回原 Embedding 模型，或重新构建该知识库。"
+            ),
+        )
 
 
 @router.post("", response_model=ChatResponse)
@@ -39,6 +66,7 @@ def chat(payload: ChatRequest, current_user: CurrentUser) -> ChatResponse:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="At least one knowledge base is required")
 
     selected_kbs = _select_authorized_kbs(payload.kb_ids, current_user)
+    _validate_embedding_config(selected_kbs)
     try:
         retriever = build_multi_kb_retriever(selected_kbs, top_k=TOP_K)
         write_audit_log(

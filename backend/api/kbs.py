@@ -24,6 +24,7 @@ from src.kb_manager import (
     list_knowledge_bases,
     update_kb_metadata,
 )
+from src.model_factory import get_current_embedding_config
 from src.splitter import split_documents
 from src.utils import clean_text, safe_filename, save_cleaned_text
 from src.vector_store import build_vector_store
@@ -221,7 +222,12 @@ def build_kb(
     documents, errors = load_documents(build_paths)
     chunks = _add_kb_metadata(split_documents(documents), kb_id=kb["id"], kb_name=kb["name"])
     build_vector_store(chunks, paths["chroma_db"])
-    metadata = update_kb_metadata(kb_id, file_count=len(build_paths), chunk_count=len(chunks))
+    metadata = update_kb_metadata(
+        kb_id,
+        file_count=len(build_paths),
+        chunk_count=len(chunks),
+        embedding=get_current_embedding_config(),
+    )
     write_audit_log(current_user["username"], "api_build_kb", f"kb_id={kb_id}, chunks={len(chunks)}")
     return BuildResponse(
         kb_id=kb_id,

@@ -133,4 +133,29 @@ http://localhost:8501
 - 云服务器或企业内网服务器
 
 部署时需要在平台中配置 DeepSeek API Key。
+## 模型配置说明
+
+模型配置属于管理员功能，只有 admin 用户可以查看或修改模型配置。普通用户只能使用已配置好的模型进行知识库问答，不能修改 LLM 或 Embedding 设置。后端会强制校验管理员权限，普通 user 即使直接请求 `/api/models/config` 也会返回 403 Forbidden。
+
+推荐使用新的环境变量：
+
+```env
+LLM_PROVIDER=deepseek
+LLM_BASE_URL=https://api.deepseek.com
+LLM_API_KEY=your_api_key
+LLM_MODEL=deepseek-chat
+LLM_TEMPERATURE=0.2
+
+EMBEDDING_PROVIDER=huggingface
+EMBEDDING_MODEL=BAAI/bge-small-zh-v1.5
+EMBEDDING_DEVICE=cpu
+
+JWT_SECRET_KEY=your_jwt_secret
+```
+
+LLM 和 Embedding 是独立配置的。DeepSeek、Qwen、Kimi 等 OpenAI-compatible API 可以通过 `LLM_BASE_URL`、`LLM_API_KEY`、`LLM_MODEL` 接入。旧的 `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL` 仍然兼容，但推荐新项目使用 `LLM_*` 配置。
+
+Embedding 当前默认使用 HuggingFace 的 `BAAI/bge-small-zh-v1.5`。切换 LLM 通常不需要重建知识库；切换 Embedding 模型通常需要重新构建知识库，因为文档向量和查询向量需要处在同一个语义向量空间。
+
+模型设置页面不会展示 API Key 明文，只会显示是否已配置。构建知识库时会把当前 Embedding 配置写入 `metadata.json`，问答检索前会校验当前 Embedding 配置是否和知识库构建时一致。
 

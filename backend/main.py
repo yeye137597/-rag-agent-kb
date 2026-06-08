@@ -8,7 +8,7 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from backend.api import auth, chat, kbs, logs, users
+from backend.api import auth, chat, kbs, logs, models, users
 from src.auth import initialize_auth
 from src.utils import ensure_directories
 
@@ -40,3 +40,4 @@ app.include_router(kbs.router, prefix="/api/kbs", tags=["knowledge-bases"])
 app.include_router(chat.router, prefix="/api/chat", tags=["chat"])
 app.include_router(users.router, prefix="/api/users", tags=["users"])
 app.include_router(logs.router, prefix="/api/logs", tags=["logs"])
+app.include_router(models.router, prefix="/api/models", tags=["models"])

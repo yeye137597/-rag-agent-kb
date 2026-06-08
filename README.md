@@ -170,6 +170,34 @@ FastAPI endpoints:
 - `PUT /api/users/{user_id}/permissions`
 - `GET /api/logs/audit`
 - `GET /api/logs/queries`
+- `GET /api/models/config`
+- `POST /api/models/config`
+
+## Model Configuration
+
+Model configuration is an administrator-only feature. Only `admin` users can view or modify LLM and Embedding settings. Normal `user` accounts can only use the configured models for knowledge base QA and cannot change LLM or Embedding settings. The backend enforces this with admin permission checks, so direct requests from normal users to model configuration APIs return `403 Forbidden`.
+
+Recommended `.env` configuration:
+
+```env
+LLM_PROVIDER=deepseek
+LLM_BASE_URL=https://api.deepseek.com
+LLM_API_KEY=your_api_key
+LLM_MODEL=deepseek-chat
+LLM_TEMPERATURE=0.2
+
+EMBEDDING_PROVIDER=huggingface
+EMBEDDING_MODEL=BAAI/bge-small-zh-v1.5
+EMBEDDING_DEVICE=cpu
+
+JWT_SECRET_KEY=your_jwt_secret
+```
+
+LLM configuration is independent from Embedding configuration. DeepSeek, Qwen, Kimi, OpenAI, and other OpenAI-compatible APIs can be connected through `LLM_BASE_URL`, `LLM_API_KEY`, and `LLM_MODEL`. The old `DEEPSEEK_API_KEY`, `DEEPSEEK_BASE_URL`, and `DEEPSEEK_MODEL` variables remain compatible, but new deployments should prefer the `LLM_*` variables.
+
+The model settings page never displays the API key in plain text. It only shows whether a key has been configured.
+
+Switching the LLM usually does not require rebuilding knowledge bases. Switching the Embedding model usually requires rebuilding existing knowledge bases because document vectors and query vectors must live in the same semantic vector space. When a knowledge base is built, the current Embedding configuration is written into its `metadata.json`; chat requests validate the current Embedding configuration against that metadata before retrieval.
 
 ## Default Admin Account
 

@@ -135,7 +135,12 @@ def delete_knowledge_base(kb_id: str) -> None:
     ) from last_error
 
 
-def update_kb_metadata(kb_id: str, file_count: int | None = None, chunk_count: int | None = None) -> dict:
+def update_kb_metadata(
+    kb_id: str,
+    file_count: int | None = None,
+    chunk_count: int | None = None,
+    embedding: dict | None = None,
+) -> dict:
     paths = get_kb_paths(kb_id)
     metadata = _read_metadata(paths["metadata"])
     if not metadata:
@@ -150,6 +155,8 @@ def update_kb_metadata(kb_id: str, file_count: int | None = None, chunk_count: i
         metadata["file_count"] = file_count
     if chunk_count is not None:
         metadata["chunk_count"] = chunk_count
+    if embedding is not None:
+        metadata["embedding"] = embedding
     metadata["updated_at"] = _now()
     paths["metadata"].parent.mkdir(parents=True, exist_ok=True)
     _write_metadata(paths["metadata"], metadata)

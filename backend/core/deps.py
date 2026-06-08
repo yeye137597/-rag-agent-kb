@@ -15,4 +15,11 @@ def get_current_user(credentials: HTTPAuthorizationCredentials | None = Depends(
     return decode_access_token(credentials.credentials)
 
 
+def require_admin(current_user: dict = Depends(get_current_user)) -> dict:
+    if current_user.get("role") != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin only")
+    return current_user
+
+
 CurrentUser = Annotated[dict, Depends(get_current_user)]
+AdminUser = Annotated[dict, Depends(require_admin)]

@@ -2,17 +2,13 @@ from pathlib import Path
 
 from langchain_chroma import Chroma
 from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEmbeddings
 
-from config import CHROMA_DIR, EMBEDDING_MODEL
+from config import CHROMA_DIR
+from src.model_factory import get_embedding_model
 
 
-def get_embeddings() -> HuggingFaceEmbeddings:
-    return HuggingFaceEmbeddings(
-        model_name=EMBEDDING_MODEL,
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True},
-    )
+def get_embeddings():
+    return get_embedding_model()
 
 
 def load_vector_store(chroma_dir: Path | str = CHROMA_DIR) -> Chroma:
@@ -29,4 +25,3 @@ def build_vector_store(chunks: list[Document], chroma_dir: Path | str = CHROMA_D
     if chunks:
         vector_store.add_documents(chunks)
     return vector_store
-

@@ -4,6 +4,7 @@ import Chat from './pages/Chat'
 import KnowledgeBase from './pages/KnowledgeBase'
 import Login from './pages/Login'
 import Logs from './pages/Logs'
+import ModelSettings from './pages/ModelSettings'
 import UserManagement from './pages/UserManagement'
 
 class ErrorBoundary extends React.Component {
@@ -32,6 +33,11 @@ class ErrorBoundary extends React.Component {
   }
 }
 
+function pageFromHash() {
+  const hash = window.location.hash.replace('#', '')
+  return hash || 'chat'
+}
+
 export default function App() {
   const [token, setToken] = useState(() => {
     try {
@@ -41,8 +47,16 @@ export default function App() {
     }
   })
   const [user, setUser] = useState(null)
-  const [page, setPage] = useState('chat')
+  const [page, setPage] = useState(pageFromHash)
   const [authError, setAuthError] = useState('')
+
+  useEffect(() => {
+    function syncPage() {
+      setPage(pageFromHash())
+    }
+    window.addEventListener('hashchange', syncPage)
+    return () => window.removeEventListener('hashchange', syncPage)
+  }, [])
 
   useEffect(() => {
     if (!token) {
@@ -67,6 +81,11 @@ export default function App() {
       })
   }, [token])
 
+  function go(nextPage) {
+    window.location.hash = nextPage
+    setPage(nextPage)
+  }
+
   function handleLogin(data) {
     try {
       localStorage.setItem('token', data.token)
@@ -77,7 +96,7 @@ export default function App() {
     setToken(data.token)
     setUser({ username: data.username, role: data.role, user_id: data.user_id })
     setAuthError('')
-    setPage('chat')
+    go('chat')
   }
 
   function logout() {
@@ -108,12 +127,15 @@ export default function App() {
             <span>{user.username} / {user.role}</span>
           </div>
           <nav>
-            <button className={page === 'chat' ? 'active' : ''} onClick={() => setPage('chat')}>问答</button>
-            <button className={page === 'kb' ? 'active' : ''} onClick={() => setPage('kb')}>知识库</button>
+            <button className={page === 'chat' ? 'active' : ''} onClick={() => go('chat')}>问答</button>
+            <button className={page === 'kb' ? 'active' : ''} onClick={() => go('kb')}>知识库</button>
             {user.role === 'admin' && (
-              <button className={page === 'users' ? 'active' : ''} onClick={() => setPage('users')}>用户</button>
+              <button className={page === 'users' ? 'active' : ''} onClick={() => go('users')}>用户</button>
             )}
-            <button className={page === 'logs' ? 'active' : ''} onClick={() => setPage('logs')}>日志</button>
+            {user.role === 'admin' && (
+              <button className={page === 'models' ? 'active' : ''} onClick={() => go('models')}>模型设置</button>
+            )}
+            <button className={page === 'logs' ? 'active' : ''} onClick={() => go('logs')}>日志</button>
             <button onClick={logout}>退出</button>
           </nav>
         </header>
@@ -121,7 +143,9 @@ export default function App() {
           {page === 'chat' && <Chat />}
           {page === 'kb' && <KnowledgeBase user={user} />}
           {page === 'users' && user.role === 'admin' && <UserManagement />}
+          {page === 'models' && <ModelSettings user={user} />}
           {page === 'logs' && <Logs user={user} />}
+          {!['chat', 'kb', 'users', 'models', 'logs'].includes(page) && <Chat />}
         </main>
       </div>
     </ErrorBoundary>
