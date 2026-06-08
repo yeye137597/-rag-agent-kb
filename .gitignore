@@ -6,6 +6,7 @@ __pycache__/
 
 # Virtual environment
 .venv/
+backend/.venv/
 venv/
 env/
 
@@ -29,6 +30,10 @@ logs/
 
 # Streamlit secrets
 .streamlit/secrets.toml
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
 
 # IDE
 .vscode/

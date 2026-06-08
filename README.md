@@ -104,6 +104,73 @@ Open the local URL shown in the terminal, usually:
 http://localhost:8501
 ```
 
+## Frontend And Backend Version
+
+The original `app.py` Streamlit application is kept as the early prototype version. The minimal separated version uses:
+
+- `backend/`: FastAPI REST API for auth, permissions, knowledge base management, document indexing, retrieval, and LangGraph RAG question answering.
+- `frontend/`: React + Vite UI for login, knowledge base selection, chat, upload, and build actions.
+- `src/`: Existing RAG business logic shared by both versions.
+
+Start the backend:
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+Start the frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:5173
+```
+
+Required environment variables:
+
+```env
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+JWT_SECRET_KEY=change-this-secret
+```
+
+Default login:
+
+```text
+username: admin
+password: admin123
+```
+
+FastAPI endpoints:
+
+- `POST /api/auth/login`
+- `POST /api/auth/register`
+- `GET /api/auth/me`
+- `GET /api/kbs`
+- `POST /api/kbs`
+- `POST /api/kbs/{kb_id}/upload`
+- `GET /api/kbs/{kb_id}/files`
+- `POST /api/kbs/{kb_id}/clean`
+- `POST /api/kbs/{kb_id}/build`
+- `DELETE /api/kbs/{kb_id}`
+- `POST /api/chat`
+- `GET /api/users`
+- `POST /api/users`
+- `PUT /api/users/{user_id}/active`
+- `PUT /api/users/{user_id}/password`
+- `PUT /api/users/{user_id}/permissions`
+- `GET /api/logs/audit`
+- `GET /api/logs/queries`
+
 ## Default Admin Account
 
 On first startup, the system creates a default administrator account if no users exist:
@@ -168,4 +235,3 @@ This is a Streamlit application and is not suitable for GitHub Pages. Recommende
 - A cloud server or internal company server
 
 Configure the DeepSeek API key as a secret or environment variable on the deployment platform.
-
