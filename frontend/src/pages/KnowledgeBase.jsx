@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { api } from '../api/client'
 
 export default function KnowledgeBase({ user }) {
@@ -13,6 +13,7 @@ export default function KnowledgeBase({ user }) {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [expandedKbIds, setExpandedKbIds] = useState({})
 
   function setKbOperation(kbId, operation) {
     setOperationLoading((current) => ({ ...current, [kbId]: operation }))
@@ -24,6 +25,10 @@ export default function KnowledgeBase({ user }) {
 
   function setKbFeedback(kbId, type, text) {
     setOperationFeedback((current) => ({ ...current, [kbId]: { type, text } }))
+  }
+
+  function toggleExpanded(kbId) {
+    setExpandedKbIds((current) => ({ ...current, [kbId]: !current[kbId] }))
   }
 
   async function refresh() {
@@ -72,6 +77,7 @@ export default function KnowledgeBase({ user }) {
     setMessage('')
     setKbFeedback(kbId, 'loading', '正在上传文件，请稍候...')
     setKbOperation(kbId, 'upload')
+    setExpandedKbIds((current) => ({ ...current, [kbId]: true }))
     try {
       const files = filesByKb[kbId]
       if (!files || files.length === 0) {
@@ -96,6 +102,7 @@ export default function KnowledgeBase({ user }) {
     setMessage('')
     setKbFeedback(kbId, 'loading', '正在清洗文档内容，可能需要一些时间...')
     setKbOperation(kbId, 'clean')
+    setExpandedKbIds((current) => ({ ...current, [kbId]: true }))
     try {
       const data = await api.cleanKbFiles(kbId)
       setCleanPreview({ ...cleanPreview, [kbId]: data.items })
@@ -116,6 +123,7 @@ export default function KnowledgeBase({ user }) {
     setMessage('')
     setKbFeedback(kbId, 'loading', '正在构建向量索引，文档较大时可能需要几分钟，请不要重复点击或刷新页面。')
     setKbOperation(kbId, 'build')
+    setExpandedKbIds((current) => ({ ...current, [kbId]: true }))
     try {
       const data = await api.buildKbWithOptions(kbId, { use_cleaned: !!useCleaned[kbId] })
       setMessage(`构建完成：${data.file_count} 个文件，${data.chunk_count} 个片段`)
@@ -194,19 +202,27 @@ export default function KnowledgeBase({ user }) {
           const previews = cleanPreview[kb.id] || []
           const activeOperation = operationLoading[kb.id]
           const feedback = operationFeedback[kb.id]
+          const isExpanded = !!expandedKbIds[kb.id]
+          const hasActiveOp = !!activeOperation
           return (
             <article className="kb-manage-card" key={kb.id}>
               <div className="kb-card-header">
-                <div>
+                <div className="kb-card-title-group">
                   <h3>{kb.name}</h3>
-                  <p className="muted">ID：{kb.id}</p>
+                  <p className="muted">ID：{kb.id} &middot; 更新于：{kb.updated_at || '-'}</p>
                 </div>
-                <div className="kb-stat-row">
-                  <span>{kb.file_count} 个文件</span>
-                  <span>{kb.chunk_count} 个片段</span>
+                <div className="kb-card-actions">
+                  <div className="kb-stat-row">
+                    <span>{kb.file_count} 个文件</span>
+                    <span>{kb.chunk_count} 个片段</span>
+                  </div>
+                  {user.role === 'admin' && (
+                    <button className="secondary-action kb-expand-btn" onClick={() => toggleExpanded(kb.id)}>
+                      {isExpanded ? '收起' : '展开管理'}
+                    </button>
+                  )}
                 </div>
               </div>
-              <p className="muted kb-updated-at">更新时间：{kb.updated_at || '-'}</p>
 
               {feedback && (
                 <div className={`kb-operation-status ${feedback.type === 'loading' ? 'is-loading' : ''} ${feedback.type === 'success' ? 'is-success' : ''} ${feedback.type === 'error' ? 'is-error' : ''}`} role={feedback.type === 'error' ? 'alert' : 'status'}>
@@ -214,7 +230,16 @@ export default function KnowledgeBase({ user }) {
                 </div>
               )}
 
-              {user.role === 'admin' && (
+              {!isExpanded && hasActiveOp && (
+                <div className="chat-loading-state kb-feedback" role="status">
+                  {activeOperation === 'upload' && '正在上传文件...'}
+                  {activeOperation === 'clean' && '正在清洗文档...'}
+                  {activeOperation === 'build' && '正在构建索引...'}
+                  {activeOperation === 'delete' && '正在删除...'}
+                </div>
+              )}
+
+              {isExpanded && user.role === 'admin' && (
                 <div className="kb-operation-grid">
                   <section className="kb-operation-section">
                     <div className="kb-operation-heading">
@@ -275,7 +300,7 @@ export default function KnowledgeBase({ user }) {
                 </div>
               )}
 
-              {files && (
+              {isExpanded && files && (
                 <div className="file-list kb-file-panel">
                   <section>
                     <h4>上传文件</h4>
@@ -294,7 +319,7 @@ export default function KnowledgeBase({ user }) {
                 </div>
               )}
 
-              {previews.length > 0 && (
+              {isExpanded && previews.length > 0 && (
                 <div className="clean-preview kb-preview-panel">
                   <h4>清洗预览</h4>
                   {previews.map((item) => (

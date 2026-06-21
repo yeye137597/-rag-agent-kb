@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { api } from '../api/client'
 
 export default function UserManagement() {
@@ -9,6 +9,11 @@ export default function UserManagement() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [expandedUserIds, setExpandedUserIds] = useState({})
+
+  function toggleExpanded(userId) {
+    setExpandedUserIds((current) => ({ ...current, [userId]: !current[userId] }))
+  }
 
   async function refresh() {
     setLoading(true)
@@ -120,78 +125,87 @@ export default function UserManagement() {
       )}
 
       <div className="user-card-list">
-        {users.map((user) => (
-          <article className="user-manage-card" key={user.id}>
-            <div className="user-card-header">
-              <div>
-                <h3>{user.username}</h3>
-                <p className="muted">用户 ID：{user.id}</p>
-              </div>
-              <div className="user-badge-row">
-                <span>{user.role === 'admin' ? '管理员' : '普通用户'}</span>
-                <span className={user.is_active ? 'is-active' : 'is-disabled'}>{user.is_active ? '已启用' : '已禁用'}</span>
-              </div>
-            </div>
-            <p className="muted user-created-at">创建时间：{user.created_at || '-'}</p>
-
-            <div className="user-section-grid">
-              <section className="user-operation-section">
-                <div className="user-section-heading">
-                  <h4>账号操作</h4>
-                  <p className="muted">管理账号状态，或为用户设置新密码。</p>
+        {users.map((user) => {
+          const isExpanded = !!expandedUserIds[user.id]
+          return (
+            <article className="user-manage-card" key={user.id}>
+              <div className="user-card-header">
+                <div className="user-card-title-group">
+                  <h3>{user.username}</h3>
+                  <p className="muted">用户 ID：{user.id} &middot; 创建时间：{user.created_at || '-'}</p>
                 </div>
-                <div className="user-account-actions">
-                  <button className="secondary-action" onClick={() => toggleActive(user)}>{user.is_active ? '禁用' : '启用'}</button>
-                  <input
-                    type="password"
-                    placeholder="新密码"
-                    value={passwords[user.id] || ''}
-                    onChange={(event) => setPasswords({ ...passwords, [user.id]: event.target.value })}
-                  />
-                  <button className="secondary-action" onClick={() => resetPassword(user.id)}>重置密码</button>
+                <div className="user-card-actions">
+                  <div className="user-badge-row">
+                    <span>{user.role === 'admin' ? '管理员' : '普通用户'}</span>
+                    <span className={user.is_active ? 'is-active' : 'is-disabled'}>{user.is_active ? '已启用' : '已禁用'}</span>
+                  </div>
+                  <button className="secondary-action user-expand-btn" onClick={() => toggleExpanded(user.id)}>
+                    {isExpanded ? '收起' : '展开管理'}
+                  </button>
                 </div>
-              </section>
+              </div>
 
-              {user.role === 'admin' ? (
-                <section className="user-operation-section">
-                  <div className="user-section-heading">
-                    <h4>授权设置</h4>
-                    <p className="muted">管理员默认可访问全部知识库。</p>
-                  </div>
-                </section>
-              ) : (
-                <section className="user-operation-section">
-                  <div className="user-section-heading">
-                    <h4>授权设置</h4>
-                    <p className="muted">选择该用户可以访问的知识库。</p>
-                  </div>
-                  {kbs.length === 0 ? (
-                    <div className="chat-empty-state">暂无可授权知识库。</div>
-                  ) : (
-                    <div className="user-permission-list">
-                      {kbs.map((kb) => (
-                        <label className="permission-card" key={`${user.id}-${kb.id}`}>
-                          <input
-                            type="checkbox"
-                            checked={(user.permissions || []).includes(kb.id)}
-                            onChange={() => togglePermission(user, kb.id)}
-                          />
-                          <span>
-                            <strong>{kb.name}</strong>
-                            <small>{kb.id}</small>
-                          </span>
-                        </label>
-                      ))}
+              {isExpanded && (
+                <div className="user-section-grid">
+                  <section className="user-operation-section">
+                    <div className="user-section-heading">
+                      <h4>账号操作</h4>
+                      <p className="muted">管理账号状态，或为用户设置新密码。</p>
                     </div>
+                    <div className="user-account-actions">
+                      <button className="secondary-action" onClick={() => toggleActive(user)}>{user.is_active ? '禁用' : '启用'}</button>
+                      <input
+                        type="password"
+                        placeholder="新密码"
+                        value={passwords[user.id] || ''}
+                        onChange={(event) => setPasswords({ ...passwords, [user.id]: event.target.value })}
+                      />
+                      <button className="secondary-action" onClick={() => resetPassword(user.id)}>重置密码</button>
+                    </div>
+                  </section>
+
+                  {user.role === 'admin' ? (
+                    <section className="user-operation-section">
+                      <div className="user-section-heading">
+                        <h4>授权设置</h4>
+                        <p className="muted">管理员默认可访问全部知识库。</p>
+                      </div>
+                    </section>
+                  ) : (
+                    <section className="user-operation-section">
+                      <div className="user-section-heading">
+                        <h4>授权设置</h4>
+                        <p className="muted">选择该用户可以访问的知识库。</p>
+                      </div>
+                      {kbs.length === 0 ? (
+                        <div className="chat-empty-state">暂无可授权知识库。</div>
+                      ) : (
+                        <div className="user-permission-list">
+                          {kbs.map((kb) => (
+                            <label className="permission-card" key={`${user.id}-${kb.id}`}>
+                              <input
+                                type="checkbox"
+                                checked={(user.permissions || []).includes(kb.id)}
+                                onChange={() => togglePermission(user, kb.id)}
+                              />
+                              <span>
+                                <strong>{kb.name}</strong>
+                                <small>{kb.id}</small>
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      <div className="user-permission-footer">
+                        <button className="primary-action" onClick={() => savePermissions(user.id, user.permissions || [])}>保存授权</button>
+                      </div>
+                    </section>
                   )}
-                  <div className="user-permission-footer">
-                    <button className="primary-action" onClick={() => savePermissions(user.id, user.permissions || [])}>保存授权</button>
-                  </div>
-                </section>
+                </div>
               )}
-            </div>
-          </article>
-        ))}
+            </article>
+          )
+        })}
       </div>
     </section>
   )

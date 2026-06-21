@@ -49,6 +49,26 @@ export default function App() {
   const [user, setUser] = useState(null)
   const [page, setPage] = useState(pageFromHash)
   const [authError, setAuthError] = useState('')
+  const [theme, setTheme] = useState(() => {
+    try {
+      return localStorage.getItem('theme') || 'light'
+    } catch {
+      return 'light'
+    }
+  })
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    try {
+      localStorage.setItem('theme', theme)
+    } catch {
+      // ignore localStorage failures
+    }
+  }, [theme])
+
+  function toggleTheme() {
+    setTheme((current) => (current === 'light' ? 'dark' : 'light'))
+  }
 
   useEffect(() => {
     function syncPage() {
@@ -137,6 +157,7 @@ export default function App() {
               <button className={page === 'models' ? 'active' : ''} onClick={() => go('models')}>模型设置</button>
             )}
             <button className={page === 'logs' ? 'active' : ''} onClick={() => go('logs')}>日志</button>
+            <button className="theme-toggle" onClick={toggleTheme}>{theme === 'light' ? '暗色' : '浅色'}</button>
             <button className="logout-action" onClick={logout}>退出</button>
           </nav>
         </header>
