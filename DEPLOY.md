@@ -141,3 +141,94 @@ docker compose up -d --build
 - 如果后续要多用户大规模使用，建议迁移 PostgreSQL、对象存储、独立向量数据库
 - 如果使用域名和 HTTPS，需要在外层配置 Nginx/Caddy/宝塔等反向代理
 - 上传大文件时可调整 `frontend/nginx.conf` 里的 `client_max_body_size`
+
+## Cloudflare Tunnel 公网访问
+
+当前项目可以通过 Cloudflare Tunnel 暴露本地 Docker 服务。
+
+公网访问地址示例：
+
+```text
+https://fany.dpdns.org
+```
+
+如果需要直接进入聊天页面，可以访问：
+
+```text
+https://fany.dpdns.org/#chat
+```
+
+推荐将 Cloudflare Tunnel 转发到本地 Docker 前端 Nginx：
+
+```text
+http://localhost:80
+```
+
+不要转发到 Vite 开发端口 `5173`，也不要单独转发后端 `8000`。
+
+原因：
+
+- Docker 版 frontend 容器已经通过 Nginx 提供静态页面
+- Nginx 已经把 `/api/` 请求代理到 `backend:8000`
+- 只暴露一个入口更简单
+- 可以避免额外 CORS 问题
+
+请求链路：
+
+```text
+用户浏览器
+  -> Cloudflare
+  -> Cloudflare Tunnel
+  -> 本机 http://localhost:80
+  -> frontend Nginx 容器
+  -> React 前端页面
+  -> /api/ 请求代理到 backend:8000
+```
+
+公网访问需要以下服务保持运行：
+
+- 本机电脑开机并联网
+- Docker Desktop 正常运行
+- `docker compose` 服务正常运行
+- Cloudflare Tunnel 正常运行
+- 域名 `fany.dpdns.org` 已正确指向该 Tunnel
+
+验证 Docker 服务状态：
+
+```bash
+docker compose ps
+```
+
+浏览器访问：
+
+```text
+http://localhost/api/health
+```
+
+应返回：
+
+```json
+{"status":"ok"}
+```
+
+公网访问：
+
+```text
+https://fany.dpdns.org/api/health
+```
+
+也应返回：
+
+```json
+{"status":"ok"}
+```
+
+常见问题：
+
+- 如果 `http://localhost` 可以访问，但 `https://fany.dpdns.org` 不能访问，优先检查 Cloudflare Tunnel 是否运行
+- 如果页面能打开但登录失败，检查 `/api/` 是否被正确代理
+- 如果 `/api/health` 本地正常但公网不正常，检查 Tunnel 的 Public Hostname 是否指向 `http://localhost:80`
+- 如果电脑休眠或关机，公网链接会失效
+- 如果 Docker 容器停止，公网链接也会失效
+
+如果将该地址用于简历展示，需要确保本机、Docker 服务和 Cloudflare Tunnel 在面试官访问期间保持在线。
