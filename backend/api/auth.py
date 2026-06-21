@@ -1,3 +1,5 @@
+﻿import os
+
 from fastapi import APIRouter, HTTPException, status
 
 from backend.core.deps import CurrentUser
@@ -31,7 +33,15 @@ def me(current_user: CurrentUser) -> UserResponse:
 
 @router.post("/register", response_model=RegisterResponse)
 def register(payload: RegisterRequest) -> RegisterResponse:
+    public_register_enabled = os.getenv("ENABLE_PUBLIC_REGISTER", "true").lower() == "true"
+    if not public_register_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Public registration is disabled",
+        )
+
     ok, message = register_user(payload.username, payload.password)
     if not ok:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=message)
     return RegisterResponse(ok=True, message=message)
+

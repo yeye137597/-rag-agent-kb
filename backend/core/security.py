@@ -1,15 +1,33 @@
-from datetime import datetime, timedelta, timezone
+﻿from datetime import datetime, timedelta, timezone
 import base64
 import hashlib
 import hmac
 import json
 import os
+import warnings
 
 from fastapi import HTTPException, status
 
 
-JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-secret-change-me")
+DEFAULT_JWT_SECRET_KEY = "dev-secret-change-me"
 ACCESS_TOKEN_EXPIRE_HOURS = 24
+
+
+def get_jwt_secret_key() -> str:
+    secret_key = os.getenv("JWT_SECRET_KEY", DEFAULT_JWT_SECRET_KEY)
+    app_env = os.getenv("APP_ENV", "development").lower()
+    if app_env == "production" and secret_key == DEFAULT_JWT_SECRET_KEY:
+        raise RuntimeError("JWT_SECRET_KEY must be configured with a strong value in production")
+    if secret_key == DEFAULT_JWT_SECRET_KEY:
+        warnings.warn(
+            "Using default JWT_SECRET_KEY. This is only acceptable for local development.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+    return secret_key
+
+
+JWT_SECRET_KEY = get_jwt_secret_key()
 
 
 def _b64url_encode(data: bytes) -> str:
@@ -66,3 +84,5 @@ def decode_access_token(token: str) -> dict:
         "username": payload["username"],
         "role": payload["role"],
     }
+
+

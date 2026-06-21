@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { api } from './api/client'
 import Chat from './pages/Chat'
 import KnowledgeBase from './pages/KnowledgeBase'
@@ -20,11 +20,11 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.error) {
       return (
-        <main className="login-page">
-          <section className="login-panel">
+        <main className="login-page auth-page">
+          <section className="login-panel auth-card">
             <h1>页面加载失败</h1>
-            <div className="error">{this.state.error.message || '前端运行时异常'}</div>
-            <button onClick={() => window.location.reload()}>刷新页面</button>
+            <div className="chat-error-state">{this.state.error.message || '前端运行时异常'}</div>
+            <button className="primary-action" onClick={() => window.location.reload()}>刷新页面</button>
           </section>
         </main>
       )
@@ -121,12 +121,13 @@ export default function App() {
   return (
     <ErrorBoundary>
       <div className="app-shell">
-        <header className="topbar">
-          <div>
-            <h1>RAG Agent KB</h1>
-            <span>{user.username} / {user.role}</span>
+        <header className="topbar app-topbar">
+          <div className="topbar-brand">
+            <span className="eyebrow">RAG Agent KB</span>
+            <h1>知识库问答系统</h1>
+            <span className="topbar-user">{user.username} / {user.role}</span>
           </div>
-          <nav>
+          <nav className="topbar-nav">
             <button className={page === 'chat' ? 'active' : ''} onClick={() => go('chat')}>问答</button>
             <button className={page === 'kb' ? 'active' : ''} onClick={() => go('kb')}>知识库</button>
             {user.role === 'admin' && (
@@ -136,7 +137,7 @@ export default function App() {
               <button className={page === 'models' ? 'active' : ''} onClick={() => go('models')}>模型设置</button>
             )}
             <button className={page === 'logs' ? 'active' : ''} onClick={() => go('logs')}>日志</button>
-            <button onClick={logout}>退出</button>
+            <button className="logout-action" onClick={logout}>退出</button>
           </nav>
         </header>
         <main>

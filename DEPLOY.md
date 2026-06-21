@@ -232,3 +232,19 @@ https://fany.dpdns.org/api/health
 - 如果 Docker 容器停止，公网链接也会失效
 
 如果将该地址用于简历展示，需要确保本机、Docker 服务和 Cloudflare Tunnel 在面试官访问期间保持在线。
+
+## 安全初始化说明
+
+生产环境部署时必须修改 `JWT_SECRET_KEY`，不要使用默认开发值或示例占位值。`APP_ENV=production` 时，如果 `JWT_SECRET_KEY` 缺失或仍为开发默认值，后端会拒绝启动。
+
+生产环境部署时必须修改 `ADMIN_PASSWORD`，不要使用默认密码 `admin123`。`APP_ENV=production` 时，如果 `ADMIN_PASSWORD` 缺失或仍为默认密码，后端会拒绝启动。
+
+公开演示或公网部署时，建议设置：
+
+```env
+ENABLE_PUBLIC_REGISTER=false
+```
+
+这样可以关闭自助注册入口，登录接口和管理员创建用户功能不受影响。
+
+默认管理员只会在用户表为空的首次初始化时创建。如果数据库中已经存在用户，后续修改 `ADMIN_USERNAME` 或 `ADMIN_PASSWORD` 不会自动重置已有 admin 密码；需要在系统内修改密码，或在明确确认数据可重建时重置数据库。

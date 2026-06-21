@@ -35,6 +35,9 @@ logs/
 frontend/node_modules/
 frontend/dist/
 
+# HuggingFace cache
+hf_cache/
+
 # IDE
 .vscode/
 .idea/

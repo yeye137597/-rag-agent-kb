@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+﻿import React, { useEffect, useState } from 'react'
 import { api } from '../api/client'
 
 export default function UserManagement() {
@@ -18,7 +18,7 @@ export default function UserManagement() {
       setUsers(userItems)
       setKbs(kbItems)
     } catch (err) {
-      setError(err.message || '加载用户失败')
+      setError(err.message || '加载用户失败，请稍后重试。')
     } finally {
       setLoading(false)
     }
@@ -86,61 +86,110 @@ export default function UserManagement() {
   }
 
   return (
-    <section className="panel">
-      <div className="section-title">
-        <h2>用户管理</h2>
-        <button onClick={refresh} disabled={loading}>{loading ? '加载中...' : '刷新'}</button>
+    <section className="user-page">
+      <div className="user-page-header">
+        <div>
+          <span className="eyebrow">用户与权限</span>
+          <h2>用户管理</h2>
+          <p className="muted">创建用户、管理账号状态，并配置知识库访问权限。</p>
+        </div>
+        <button className="secondary-action" onClick={refresh} disabled={loading}>{loading ? '加载中...' : '刷新'}</button>
       </div>
 
-      <div className="create-row">
-        <input placeholder="用户名" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
-        <input placeholder="密码" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
-        <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
-          <option value="user">user</option>
-          <option value="admin">admin</option>
-        </select>
-        <button onClick={createUser} disabled={!form.username.trim() || !form.password}>创建用户</button>
+      <div className="user-create-card">
+        <div>
+          <h3>创建用户</h3>
+          <p className="muted">为团队成员创建账号，并指定初始角色。</p>
+        </div>
+        <div className="user-create-form">
+          <input placeholder="用户名" value={form.username} onChange={(event) => setForm({ ...form, username: event.target.value })} />
+          <input placeholder="密码" type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+          <select value={form.role} onChange={(event) => setForm({ ...form, role: event.target.value })}>
+            <option value="user">普通用户</option>
+            <option value="admin">管理员</option>
+          </select>
+          <button className="primary-action" onClick={createUser} disabled={!form.username.trim() || !form.password}>创建用户</button>
+        </div>
       </div>
 
-      {message && <div className="success">{message}</div>}
-      {error && <div className="error">{error}</div>}
+      {message && <div className="success user-feedback">{message}</div>}
+      {error && <div className="chat-error-state user-feedback" role="alert">{error}</div>}
+      {loading && <div className="chat-loading-state user-feedback" role="status">用户列表加载中...</div>}
+      {!loading && users.length === 0 && (
+        <div className="chat-empty-state user-feedback">暂无用户。请先创建一个用户账号。</div>
+      )}
 
-      <div className="user-list">
+      <div className="user-card-list">
         {users.map((user) => (
-          <article className="user-item" key={user.id}>
-            <div>
-              <h3>{user.username}</h3>
-              <p className="muted">ID: {user.id} / {user.role} / {user.is_active ? '启用' : '禁用'}</p>
-              <p className="muted">创建时间：{user.created_at || '-'}</p>
-            </div>
-            <div className="user-actions">
-              <button onClick={() => toggleActive(user)}>{user.is_active ? '禁用' : '启用'}</button>
-              <input
-                type="password"
-                placeholder="新密码"
-                value={passwords[user.id] || ''}
-                onChange={(event) => setPasswords({ ...passwords, [user.id]: event.target.value })}
-              />
-              <button onClick={() => resetPassword(user.id)}>重置密码</button>
-            </div>
-            {user.role === 'admin' ? (
-              <p className="muted">管理员默认可访问全部知识库</p>
-            ) : (
-              <div className="permission-grid">
-                {kbs.map((kb) => (
-                  <label className="check-row" key={`${user.id}-${kb.id}`}>
-                    <input
-                      type="checkbox"
-                      checked={(user.permissions || []).includes(kb.id)}
-                      onChange={() => togglePermission(user, kb.id)}
-                    />
-                    <span>{kb.name}</span>
-                    <small>{kb.id}</small>
-                  </label>
-                ))}
-                <button onClick={() => savePermissions(user.id, user.permissions || [])}>保存授权</button>
+          <article className="user-manage-card" key={user.id}>
+            <div className="user-card-header">
+              <div>
+                <h3>{user.username}</h3>
+                <p className="muted">用户 ID：{user.id}</p>
               </div>
-            )}
+              <div className="user-badge-row">
+                <span>{user.role === 'admin' ? '管理员' : '普通用户'}</span>
+                <span className={user.is_active ? 'is-active' : 'is-disabled'}>{user.is_active ? '已启用' : '已禁用'}</span>
+              </div>
+            </div>
+            <p className="muted user-created-at">创建时间：{user.created_at || '-'}</p>
+
+            <div className="user-section-grid">
+              <section className="user-operation-section">
+                <div className="user-section-heading">
+                  <h4>账号操作</h4>
+                  <p className="muted">管理账号状态，或为用户设置新密码。</p>
+                </div>
+                <div className="user-account-actions">
+                  <button className="secondary-action" onClick={() => toggleActive(user)}>{user.is_active ? '禁用' : '启用'}</button>
+                  <input
+                    type="password"
+                    placeholder="新密码"
+                    value={passwords[user.id] || ''}
+                    onChange={(event) => setPasswords({ ...passwords, [user.id]: event.target.value })}
+                  />
+                  <button className="secondary-action" onClick={() => resetPassword(user.id)}>重置密码</button>
+                </div>
+              </section>
+
+              {user.role === 'admin' ? (
+                <section className="user-operation-section">
+                  <div className="user-section-heading">
+                    <h4>授权设置</h4>
+                    <p className="muted">管理员默认可访问全部知识库。</p>
+                  </div>
+                </section>
+              ) : (
+                <section className="user-operation-section">
+                  <div className="user-section-heading">
+                    <h4>授权设置</h4>
+                    <p className="muted">选择该用户可以访问的知识库。</p>
+                  </div>
+                  {kbs.length === 0 ? (
+                    <div className="chat-empty-state">暂无可授权知识库。</div>
+                  ) : (
+                    <div className="user-permission-list">
+                      {kbs.map((kb) => (
+                        <label className="permission-card" key={`${user.id}-${kb.id}`}>
+                          <input
+                            type="checkbox"
+                            checked={(user.permissions || []).includes(kb.id)}
+                            onChange={() => togglePermission(user, kb.id)}
+                          />
+                          <span>
+                            <strong>{kb.name}</strong>
+                            <small>{kb.id}</small>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                  <div className="user-permission-footer">
+                    <button className="primary-action" onClick={() => savePermissions(user.id, user.permissions || [])}>保存授权</button>
+                  </div>
+                </section>
+              )}
+            </div>
           </article>
         ))}
       </div>

@@ -1,4 +1,4 @@
-streamlit
+﻿streamlit
 python-dotenv
 langchain
 langchain-community
@@ -10,6 +10,7 @@ langgraph
 chromadb
 sentence-transformers
 pypdf
+cryptography>=3.1
 docx2txt
 rank_bm25
 protobuf
